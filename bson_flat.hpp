@@ -76,7 +76,8 @@ public:
   /**
    * @brief Determine if the BSON writer is valid
    */
-  operator bool() const noexcept {
+  operator bool() const noexcept
+  {
     return (buffer != nullptr) || (is_root != 0);
   }
 
@@ -110,7 +111,8 @@ public:
    * 
    * @param e_name Element name
    */
-  writer add_document(const char* e_name) noexcept {
+  writer add_document(const char* e_name) noexcept
+  {
     return add_subdocument(e_name, type::document);
   }
 
@@ -119,7 +121,8 @@ public:
    * 
    * @param e_name Element name
    */
-  writer add_array(const char* e_name) noexcept {
+  writer add_array(const char* e_name) noexcept
+  {
     return add_subdocument(e_name, type::array);
   }
 
@@ -129,7 +132,8 @@ public:
    * @param e_name Element name
    * @param subdocument Reference to BSON writer which holds document to add
    */
-  bool add_document(const char* e_name, const writer& subdocument) noexcept {
+  bool add_document(const char* e_name, const writer& subdocument) noexcept
+  {
     return add_subdocument(e_name, type::document, subdocument);
   }
 
@@ -139,7 +143,8 @@ public:
    * @param e_name Element name
    * @param subdocument Reference to BSON writer which holds array to add
    */
-  bool add_array(const char* e_name, const writer& subdocument) noexcept {
+  bool add_array(const char* e_name, const writer& subdocument) noexcept
+  {
     return add_subdocument(e_name, type::array, subdocument);
   }
 
@@ -159,9 +164,10 @@ public:
    * 
    * @param e_name Element name
    */
-  bool add_undefined(const char* e_name) noexcept {
+  bool add_undefined(const char* e_name) noexcept
+  {
     return add_element(e_name, type::undefined, 0) != nullptr;
-  };
+  }
 
   /**
    * @brief Add boolean
@@ -176,7 +182,8 @@ public:
    * 
    * @param e_name Element name
    */
-  bool add_true(const char* e_name) noexcept {
+  bool add_true(const char* e_name) noexcept
+  {
     return add_boolean(e_name, true);
   }
 
@@ -185,7 +192,8 @@ public:
    * 
    * @param e_name Element name
    */
-  bool add_false(const char* e_name) noexcept {
+  bool add_false(const char* e_name) noexcept
+  {
     return add_boolean(e_name, false);
   }
 
@@ -194,7 +202,8 @@ public:
    * 
    * @param e_name Element name
    */
-  bool add_null(const char* e_name) noexcept {
+  bool add_null(const char* e_name) noexcept
+  {
     return add_element(e_name, type::null, 0) != nullptr;
   }
 
