@@ -1,0 +1,3 @@
+/gtest
+/tester_*
+!/tester_*.cpp
