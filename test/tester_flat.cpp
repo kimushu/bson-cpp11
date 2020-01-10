@@ -43,8 +43,10 @@ TEST(writer, auto_allocation)
 {
   bson::writer w;
   ASSERT_TRUE(w);
+  ASSERT_TRUE(w.valid());
   w.~writer();
   ASSERT_FALSE(w);
+  ASSERT_FALSE(w.valid());
 }
 
 TEST(writer, fixed_buffer)

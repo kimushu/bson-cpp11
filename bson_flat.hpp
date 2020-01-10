@@ -74,11 +74,19 @@ public:
   void* operator new[](std::size_t) = delete;
 
   /**
-   * @brief Determine if the BSON writer is valid
+   * @brief Check whether the BSON writer is valid
+   */
+  bool valid() const noexcept
+  {
+    return (buffer != nullptr) || (is_root != 0);
+  }
+
+  /**
+   * @brief Check if the BSON writer is valid
    */
   operator bool() const noexcept
   {
-    return (buffer != nullptr) || (is_root != 0);
+    return valid();
   }
 
   /**
