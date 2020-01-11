@@ -71,7 +71,7 @@ bool writer::add_double(const char* e_name, double value) noexcept
   if (!dest) {
     return false;
   }
-  *dest = value;
+  std::memcpy(dest, &value, 8);
   return true;
 }
 
@@ -95,7 +95,8 @@ bool writer::add_string(const char* e_name, const char* string,
   if (!dest.pointer) {
     return false;
   }
-  *dest.int32++ = static_cast<std::int32_t>(length);
+  const int32_t length_buffer = length;
+  std::memcpy(dest.int32++, &length_buffer, 4);
   std::memcpy(dest.pointer, string, length);
   dest.chars[length] = 0;
   return true;
@@ -116,7 +117,8 @@ bool writer::add_binary(const char* e_name, const void* buffer,
   if (!dest.pointer) {
     return false;
   }
-  *dest.int32++ = static_cast<std::int32_t>(length);
+  const int32_t length_buffer = length;
+  std::memcpy(dest.int32++, &length_buffer, 4);
   *dest.subtype++ = subtype;
   std::memcpy(dest.pointer, buffer, length);
   return true;
@@ -124,7 +126,7 @@ bool writer::add_binary(const char* e_name, const void* buffer,
 
 bool writer::add_boolean(const char* e_name, bool value) noexcept
 {
-  auto dest = static_cast<std::uint8_t*>(
+  const auto dest = static_cast<std::uint8_t*>(
     add_element(e_name, type::boolean, 1)
   );
   if (!dest) {
@@ -136,25 +138,25 @@ bool writer::add_boolean(const char* e_name, bool value) noexcept
 
 bool writer::add_int32(const char* e_name, std::int32_t value) noexcept
 {
-  auto dest = static_cast<std::int32_t*>(
+  const auto dest = static_cast<std::int32_t*>(
     add_element(e_name, type::int32, 4)
   );
   if (!dest) {
     return false;
   }
-  *dest = value;
+  std::memcpy(dest, &value, 4);
   return true;
 }
 
 bool writer::add_int64(const char* e_name, std::int64_t value) noexcept
 {
-  auto dest = static_cast<std::int64_t*>(
+  const auto dest = static_cast<std::int64_t*>(
     add_element(e_name, type::int64, 8)
   );
   if (!dest) {
     return false;
   }
-  *dest = value;
+  std::memcpy(dest, &value, 8);
   return true;
 }
 
@@ -163,8 +165,8 @@ bool writer::get_bytes(const std::uint8_t*& bytes, std::size_t& length) const no
   if (locked) {
     return false;
   }
-  auto root = static_cast<const writer*>(const_cast<writer*>(this)->get_root());
-  auto header_offset = (is_root ? 0 : (parent->offset - 5));
+  const auto root = static_cast<const writer*>(const_cast<writer*>(this)->get_root());
+  const auto header_offset = (is_root ? 0 : (parent->offset - 5));
   bytes = static_cast<const std::uint8_t*>(root->buffer) + header_offset;
   length = (offset + 1) - header_offset;
   return true;
@@ -176,8 +178,8 @@ void* writer::add_element(const char* e_name, type type, std::size_t space) noex
     return nullptr;
   }
   std::size_t depth;
-  auto root = get_root(&depth);
-  auto name_length = std::strlen(e_name) + 1;
+  const auto root = get_root(&depth);
+  const auto name_length = std::strlen(e_name) + 1;
   if (name_length <= 1) {
     return nullptr;
   }
@@ -259,11 +261,11 @@ writer* writer::get_root(std::size_t* depth_store) noexcept
 
 void writer::update_offset(void* buffer, std::uint32_t new_offset) noexcept
 {
-  auto header_offset = is_root ? 0 : (parent->offset - 5);
-  *reinterpret_cast<std::int32_t*>(
-    static_cast<std::uint8_t*>(buffer) + header_offset
-  ) = new_offset + 1 - header_offset;
-  static_cast<std::uint8_t*>(buffer)[new_offset] = 0x00;
+  const auto bytes = static_cast<std::uint8_t*>(buffer);
+  const auto header_offset = is_root ? 0 : (parent->offset - 5);
+  int total_buffer = new_offset + 1 - header_offset;
+  std::memcpy(bytes + header_offset, &total_buffer, 4);
+  bytes[new_offset] = 0x00;
   offset = new_offset;
 }
 
