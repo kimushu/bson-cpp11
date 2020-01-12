@@ -4,6 +4,7 @@
  */
 #include "bson_flat.hpp"
 #include <malloc.h>
+#include <cmath>
 #include <cstring>
 
 namespace bson {
@@ -267,6 +268,317 @@ void writer::update_offset(void* buffer, std::uint32_t new_offset) noexcept
   std::memcpy(bytes + header_offset, &total_buffer, 4);
   bytes[new_offset] = 0x00;
   offset = new_offset;
+}
+
+bool reader::element::truthy() const noexcept
+{
+  union {
+    double fp64;
+    int32_t int32;
+    int64_t int64;
+  } buffer;
+  switch (type()) {
+  case type::fp64:
+    std::memcpy(&buffer.fp64, data.fp64, 8);
+    return (!std::isnan(buffer.fp64)) && (buffer.fp64 != 0.0);
+  case type::string:
+    std::memcpy(&buffer.int32, data.int32, 4);
+    return (buffer.int32 > 1);
+  case type::document:
+  case type::array:
+  case type::binary:
+    return true;
+  case type::boolean:
+    return (*data.byte != 0x00);
+  case type::int32:
+    std::memcpy(&buffer.int32, data.int32, 4);
+    return (buffer.int32 != 0);
+  case type::int64:
+    std::memcpy(&buffer.int64, data.int64, 8);
+    return (buffer.int64 != 0);
+  case type::undefined:
+  case type::null:
+  default:
+    return false;
+  }
+}
+
+bool reader::element::get_double(double& value) const noexcept
+{
+  if (!is_double()) {
+    return false;
+  }
+  std::memcpy(&value, data.fp64, sizeof(double));
+  return true;
+}
+
+bool reader::element::get_string(const char*& string) const noexcept
+{
+  if (!is_string()) {
+    return false;
+  }
+  string = data.offset<char>(4);
+  return true;
+}
+
+bool reader::element::get_string(const char*& string, std::size_t& length) const noexcept
+{
+  if (!is_string()) {
+    return false;
+  }
+  string = data.offset<char>(4);
+  int32_t length_buffer;
+  std::memcpy(&length_buffer, data.int32, 4);
+  length = length_buffer - 1;
+  return true;
+}
+
+bool reader::element::get_binary(const void*& buffer, std::size_t& length) const noexcept
+{
+  if (!is_binary()) {
+    return false;
+  }
+  buffer = data.offset<void>(5);
+  int32_t length_buffer;
+  std::memcpy(&length_buffer, data.int32, 4);
+  length = length_buffer;
+  return true;
+}
+
+bool reader::element::get_binary(const void*& buffer, std::size_t& length, bson::subtype& subtype) const noexcept
+{
+  if (!is_binary()) {
+    return false;
+  }
+  buffer = data.offset<void>(5);
+  int32_t length_buffer;
+  std::memcpy(&length_buffer, data.int32, 4);
+  length = length_buffer;
+  subtype = *data.offset<bson::subtype>(4);
+  return true;
+}
+
+bool reader::element::get_boolean(bool& value) const noexcept
+{
+  if (!is_boolean()) {
+    return false;
+  }
+  value = (*data.byte) != 0;
+  return true;
+}
+
+bool reader::element::get_int32(int32_t& value) const noexcept
+{
+  if (!is_int32()) {
+    return false;
+  }
+  std::memcpy(&value, data.int32, 4);
+  return true;
+}
+
+bool reader::element::get_int64(int64_t& value) const noexcept
+{
+  if (!is_int64()) {
+    return false;
+  }
+  std::memcpy(&value, data.int64, 8);
+  return true;
+}
+
+bool reader::element::get_integer(int64_t& value) const noexcept
+{
+  switch (type()) {
+  case type::int32:
+    {
+      int32_t value_buffer;
+      std::memcpy(&value_buffer, data.int32, 4);
+      value = value_buffer;
+    }
+    return true;
+  case type::int64:
+    std::memcpy(&value, data.int64, 8);
+    return true;
+  default:
+    return false;
+  }
+}
+
+bool reader::element::get_number(double& value) const noexcept
+{
+  switch (type()) {
+  case type::fp64:
+    std::memcpy(&value, data.fp64, 8);
+    return true;
+  case type::int32:
+    {
+      int32_t value_buffer;
+      std::memcpy(&value_buffer, data.int32, 4);
+      value = value_buffer;
+    }
+    return true;
+  case type::int64:
+    {
+      int64_t value_buffer;
+      std::memcpy(&value_buffer, data.int64, 8);
+      value = value_buffer;
+    }
+    return true;
+  default:
+    return false;
+  }
+}
+
+reader reader::element::as_subdocument(const reader& default_value, bson::type type) const noexcept
+{
+  if (this->type() != type) {
+    return default_value;
+  }
+  int32_t length_buffer;
+  std::memcpy(&length_buffer, data.int32, 4);
+  return reader(data.pointer, length_buffer);
+}
+
+reader::const_iterator::const_iterator(const reader& owner) noexcept
+{
+  /*
+    if (end_position) {
+      // Current element is valid
+    } else {
+      // Current element is invalid
+      if (next_position)
+        // Failed (next_position indicates failed position)
+      } else {
+        // Ended
+      }
+    }
+  */
+  if (!owner.buffer) {
+    // No valid buffer
+    return;
+  }
+  next_position.pointer = owner.buffer.pointer;
+  if (owner.length < 4) {
+    // No total length field
+    return;
+  }
+  int32_t total;
+  std::memcpy(&total, next_position.int32, 4);
+  if ((total < 4) || (total > owner.length)) {
+    // Invalid total length
+    return;
+  }
+
+  // Get the first element
+  end_position.pointer = next_position.offset<void>(total);
+  ++next_position.int32;
+  this->operator++();
+}
+
+reader::const_iterator& reader::const_iterator::operator++() noexcept
+{
+  if (!end_position) {
+    // No more elements
+    return *this;
+  }
+
+  // Parse e_name
+  if (next_position.name >= end_position.name) {
+    // Buffer ended without termination
+    goto terminate;
+  }
+  if (*next_position.byte == 0x00) {
+    // End of document
+    next_position = nullptr;
+    goto terminate;
+  }
+  current.e_name = next_position.name;
+  for (;;) {
+    char ch;
+    ch = *next_position.name++;
+    if (next_position.name >= end_position.name) {
+      // Abnormal termination in e_name/type
+terminate:
+      current.e_name = nullptr;
+      current.data = nullptr;
+      end_position = nullptr;
+      return *this;
+    }
+    if (ch == '\0') {
+      break;
+    }
+  }
+
+  // Get type
+  auto type = *next_position.type++;
+
+  // Update current
+  current.data = next_position.pointer;
+
+  switch (type) {
+  case type::fp64:
+  case type::int64:
+    if (++next_position.int64 <= end_position.pointer) {
+      return *this;
+    }
+    break;
+  case type::string:
+    if (++next_position.int32 <= end_position.pointer) {
+      std::int32_t length;
+      std::memcpy(&length, &next_position.int32[-1], 4);
+      if (length >= 1) {
+        next_position.string += length;
+        if (next_position.pointer <= end_position.pointer) {
+          if (next_position.string[-1] == '\0') {
+            return *this;
+          }
+        }
+      }
+    }
+    break;
+  case type::document:
+  case type::array:
+    if (++next_position.int32 <= end_position.pointer) {
+      std::int32_t length;
+      std::memcpy(&length, &next_position.int32[-1], 4);
+      if (length >= 5) {
+        next_position.byte += (length - 4);
+        if (next_position.pointer <= end_position.pointer) {
+          if (next_position.byte[-1] == 0x00) {
+            return *this;
+          }
+        }
+      }
+    }
+    break;
+  case type::binary:
+    if (++next_position.int32 <= end_position.pointer) {
+      std::int32_t length;
+      std::memcpy(&length, &next_position.int32[-1], 4);
+      if (length >= 0) {
+        next_position.byte += (length + 1);
+        if (next_position.pointer <= end_position.pointer) {
+          return *this;
+        }
+      }
+    }
+    break;
+  case type::undefined:
+  case type::null:
+    return *this;
+  case type::boolean:
+    if (++next_position.byte <= end_position.pointer) {
+      return *this;
+    }
+    break;
+  case type::int32:
+    if (++next_position.int32 <= end_position.pointer) {
+      return *this;
+    }
+    break;
+  }
+
+  // Abnormal termination in element
+  goto terminate;
 }
 
 } /* namespace bson */
