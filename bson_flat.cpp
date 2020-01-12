@@ -96,7 +96,7 @@ bool writer::add_string(const char* e_name, const char* string,
   if (!dest.pointer) {
     return false;
   }
-  const int32_t length_buffer = length;
+  const int32_t length_buffer = length + 1;
   std::memcpy(dest.int32++, &length_buffer, 4);
   std::memcpy(dest.pointer, string, length);
   dest.chars[length] = 0;
