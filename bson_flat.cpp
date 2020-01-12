@@ -463,7 +463,7 @@ reader::const_iterator::const_iterator(const reader& owner) noexcept
   }
   int32_t total;
   std::memcpy(&total, next_position.int32, 4);
-  if ((total < 4) || (total > owner.length)) {
+  if ((total < 4) || (static_cast<std::size_t>(total) > owner.length)) {
     // Invalid total length
     return;
   }

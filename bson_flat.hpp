@@ -484,8 +484,9 @@ public:
       case type::undefined:
       case type::null:
         return true;
+      default:
+        return false;
       }
-      return false;
     }
 
     /**
@@ -497,8 +498,9 @@ public:
       case type::int32:
       case type::int64:
         return true;
+      default:
+        return false;
       }
-      return false;
     }
 
     /**
@@ -511,8 +513,9 @@ public:
       case type::int32:
       case type::int64:
         return true;
+      default:
+        return false;
       }
-      return false;
     }
 
     /**

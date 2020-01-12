@@ -1,5 +1,5 @@
 TESTS = tester_flat
-CXXFLAGS = -std=c++11
+CXXFLAGS = -std=c++11 -Wall
 LDFLAGS = -pthread
 
 run: $(TESTS)
