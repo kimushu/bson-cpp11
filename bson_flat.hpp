@@ -796,7 +796,7 @@ public:
      */
     bson::type type() const noexcept
     {
-      return data ? *data.offset<bson::type>(-1) : static_cast<bson::type>(0);
+      return data ? static_cast<bson::type>(e_name[-1]) : static_cast<bson::type>(0);
     }
 
   private:

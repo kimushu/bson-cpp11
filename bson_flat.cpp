@@ -184,7 +184,7 @@ void* writer::add_element(const char* e_name, type type, std::size_t space) noex
   if (name_length <= 1) {
     return nullptr;
   }
-  auto required = offset + name_length + 1 + space + 1 + depth;
+  auto required = offset + 1 + name_length + space + 1 + depth;
   if (root->length < required) {
     // Insufficient space
     if (!root->malloc) {
@@ -209,9 +209,9 @@ void* writer::add_element(const char* e_name, type type, std::size_t space) noex
   //                             (old)                            (new)
 
   auto dest = static_cast<std::uint8_t*>(root->buffer) + offset;
+  *dest++ = static_cast<std::uint8_t>(type);
   std::memcpy(dest, e_name, name_length);
   dest += name_length;
-  *dest++ = static_cast<std::uint8_t>(type);
   update_offset(root->buffer, offset + name_length + 1 + space);
   return dest;
 }
@@ -481,35 +481,33 @@ reader::const_iterator& reader::const_iterator::operator++() noexcept
     return *this;
   }
 
-  // Parse e_name
-  if (next_position.name >= end_position.name) {
+  // Get type
+  if (next_position.pointer >= end_position.pointer) {
     // Buffer ended without termination
-    goto terminate;
+terminate:
+    current.e_name = nullptr;
+    current.data = nullptr;
+    end_position = nullptr;
+    return *this;
   }
-  if (*next_position.byte == 0x00) {
+  auto type = *next_position.type++;
+  if (static_cast<std::uint8_t>(type) == 0x00) {
     // End of document
     next_position = nullptr;
     goto terminate;
   }
+
+  // Parse e_name
   current.e_name = next_position.name;
   for (;;) {
-    char ch;
-    ch = *next_position.name++;
     if (next_position.name >= end_position.name) {
       // Abnormal termination in e_name/type
-terminate:
-      current.e_name = nullptr;
-      current.data = nullptr;
-      end_position = nullptr;
-      return *this;
+      goto terminate;
     }
-    if (ch == '\0') {
+    if (*next_position.name++ == '\0') {
       break;
     }
   }
-
-  // Get type
-  auto type = *next_position.type++;
 
   // Update current
   current.data = next_position.pointer;
