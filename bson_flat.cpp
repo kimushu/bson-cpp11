@@ -67,7 +67,7 @@ writer::~writer() noexcept
 bool writer::add_double(const char* e_name, double value) noexcept
 {
   auto dest = static_cast<double*>(
-    add_element(e_name, type::fp64, 8)
+    add_element(e_name, bson::type::fp64, 8)
   );
   if (!dest) {
     return false;
@@ -92,7 +92,7 @@ bool writer::add_string(const char* e_name, const char* string,
     char* chars;
     void* pointer;
   } dest;
-  dest.pointer = add_element(e_name, type::string, length + 5);
+  dest.pointer = add_element(e_name, bson::type::string, length + 5);
   if (!dest.pointer) {
     return false;
   }
@@ -114,7 +114,7 @@ bool writer::add_binary(const char* e_name, const void* buffer,
     bson::subtype* subtype;
     void* pointer;
   } dest;
-  dest.pointer = add_element(e_name, type::binary, length + 5);
+  dest.pointer = add_element(e_name, bson::type::binary, length + 5);
   if (!dest.pointer) {
     return false;
   }
@@ -128,7 +128,7 @@ bool writer::add_binary(const char* e_name, const void* buffer,
 bool writer::add_boolean(const char* e_name, bool value) noexcept
 {
   const auto dest = static_cast<std::uint8_t*>(
-    add_element(e_name, type::boolean, 1)
+    add_element(e_name, bson::type::boolean, 1)
   );
   if (!dest) {
     return false;
@@ -140,7 +140,7 @@ bool writer::add_boolean(const char* e_name, bool value) noexcept
 bool writer::add_int32(const char* e_name, std::int32_t value) noexcept
 {
   const auto dest = static_cast<std::int32_t*>(
-    add_element(e_name, type::int32, 4)
+    add_element(e_name, bson::type::int32, 4)
   );
   if (!dest) {
     return false;
@@ -152,7 +152,7 @@ bool writer::add_int32(const char* e_name, std::int32_t value) noexcept
 bool writer::add_int64(const char* e_name, std::int64_t value) noexcept
 {
   const auto dest = static_cast<std::int64_t*>(
-    add_element(e_name, type::int64, 8)
+    add_element(e_name, bson::type::int64, 8)
   );
   if (!dest) {
     return false;
@@ -278,26 +278,26 @@ bool reader::element::truthy() const noexcept
     int64_t int64;
   } buffer;
   switch (type()) {
-  case type::fp64:
+  case bson::type::fp64:
     std::memcpy(&buffer.fp64, data.fp64, 8);
     return (!std::isnan(buffer.fp64)) && (buffer.fp64 != 0.0);
-  case type::string:
+  case bson::type::string:
     std::memcpy(&buffer.int32, data.int32, 4);
     return (buffer.int32 > 1);
-  case type::document:
-  case type::array:
-  case type::binary:
+  case bson::type::document:
+  case bson::type::array:
+  case bson::type::binary:
     return true;
-  case type::boolean:
+  case bson::type::boolean:
     return (*data.byte != 0x00);
-  case type::int32:
+  case bson::type::int32:
     std::memcpy(&buffer.int32, data.int32, 4);
     return (buffer.int32 != 0);
-  case type::int64:
+  case bson::type::int64:
     std::memcpy(&buffer.int64, data.int64, 8);
     return (buffer.int64 != 0);
-  case type::undefined:
-  case type::null:
+  case bson::type::undefined:
+  case bson::type::null:
   default:
     return false;
   }
@@ -388,14 +388,14 @@ bool reader::element::get_int64(int64_t& value) const noexcept
 bool reader::element::get_integer(int64_t& value) const noexcept
 {
   switch (type()) {
-  case type::int32:
+  case bson::type::int32:
     {
       int32_t value_buffer;
       std::memcpy(&value_buffer, data.int32, 4);
       value = value_buffer;
     }
     return true;
-  case type::int64:
+  case bson::type::int64:
     std::memcpy(&value, data.int64, 8);
     return true;
   default:
@@ -406,17 +406,17 @@ bool reader::element::get_integer(int64_t& value) const noexcept
 bool reader::element::get_number(double& value) const noexcept
 {
   switch (type()) {
-  case type::fp64:
+  case bson::type::fp64:
     std::memcpy(&value, data.fp64, 8);
     return true;
-  case type::int32:
+  case bson::type::int32:
     {
       int32_t value_buffer;
       std::memcpy(&value_buffer, data.int32, 4);
       value = value_buffer;
     }
     return true;
-  case type::int64:
+  case bson::type::int64:
     {
       int64_t value_buffer;
       std::memcpy(&value_buffer, data.int64, 8);
@@ -513,13 +513,13 @@ terminate:
   current.data = next_position.pointer;
 
   switch (type) {
-  case type::fp64:
-  case type::int64:
+  case bson::type::fp64:
+  case bson::type::int64:
     if (++next_position.int64 <= end_position.pointer) {
       return *this;
     }
     break;
-  case type::string:
+  case bson::type::string:
     if (++next_position.int32 <= end_position.pointer) {
       std::int32_t length;
       std::memcpy(&length, &next_position.int32[-1], 4);
@@ -533,8 +533,8 @@ terminate:
       }
     }
     break;
-  case type::document:
-  case type::array:
+  case bson::type::document:
+  case bson::type::array:
     if (++next_position.int32 <= end_position.pointer) {
       std::int32_t length;
       std::memcpy(&length, &next_position.int32[-1], 4);
@@ -548,7 +548,7 @@ terminate:
       }
     }
     break;
-  case type::binary:
+  case bson::type::binary:
     if (++next_position.int32 <= end_position.pointer) {
       std::int32_t length;
       std::memcpy(&length, &next_position.int32[-1], 4);
@@ -560,15 +560,15 @@ terminate:
       }
     }
     break;
-  case type::undefined:
-  case type::null:
+  case bson::type::undefined:
+  case bson::type::null:
     return *this;
-  case type::boolean:
+  case bson::type::boolean:
     if (++next_position.byte <= end_position.pointer) {
       return *this;
     }
     break;
-  case type::int32:
+  case bson::type::int32:
     if (++next_position.int32 <= end_position.pointer) {
       return *this;
     }

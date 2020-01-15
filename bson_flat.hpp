@@ -129,7 +129,7 @@ public:
    */
   writer add_document(const char* e_name) noexcept
   {
-    return add_subdocument(e_name, type::document);
+    return add_subdocument(e_name, bson::type::document);
   }
 
   /**
@@ -139,7 +139,7 @@ public:
    */
   writer add_array(const char* e_name) noexcept
   {
-    return add_subdocument(e_name, type::array);
+    return add_subdocument(e_name, bson::type::array);
   }
 
   /**
@@ -150,7 +150,7 @@ public:
    */
   bool add_document(const char* e_name, const writer& subdocument) noexcept
   {
-    return add_subdocument(e_name, type::document, subdocument);
+    return add_subdocument(e_name, bson::type::document, subdocument);
   }
 
   /**
@@ -161,7 +161,7 @@ public:
    */
   bool add_array(const char* e_name, const writer& subdocument) noexcept
   {
-    return add_subdocument(e_name, type::array, subdocument);
+    return add_subdocument(e_name, bson::type::array, subdocument);
   }
 
   /**
@@ -182,7 +182,7 @@ public:
    */
   bool add_undefined(const char* e_name) noexcept
   {
-    return add_element(e_name, type::undefined, 0) != nullptr;
+    return add_element(e_name, bson::type::undefined, 0) != nullptr;
   }
 
   /**
@@ -220,7 +220,7 @@ public:
    */
   bool add_null(const char* e_name) noexcept
   {
-    return add_element(e_name, type::null, 0) != nullptr;
+    return add_element(e_name, bson::type::null, 0) != nullptr;
   }
 
   /**
@@ -428,52 +428,52 @@ public:
     /**
      * @brief Check if the element type is double
      */
-    bool is_double() const noexcept { return type() == type::fp64; }
+    bool is_double() const noexcept { return type() == bson::type::fp64; }
 
     /**
      * @brief Check if the element type is string
      */
-    bool is_string() const noexcept { return type() == type::string; }
+    bool is_string() const noexcept { return type() == bson::type::string; }
 
     /**
      * @brief Check if the element type is document
      */
-    bool is_document() const noexcept { return type() == type::document; }
+    bool is_document() const noexcept { return type() == bson::type::document; }
 
     /**
      * @brief Check if the element type is array
      */
-    bool is_array() const noexcept { return type() == type::array; }
+    bool is_array() const noexcept { return type() == bson::type::array; }
 
     /**
      * @brief Check if the element type is binary
      */
-    bool is_binary() const noexcept { return type() == type::binary; }
+    bool is_binary() const noexcept { return type() == bson::type::binary; }
 
     /**
      * @brief Check if the element type is undefined
      */
-    bool is_undefined() const noexcept { return type() == type::undefined; }
+    bool is_undefined() const noexcept { return type() == bson::type::undefined; }
 
     /**
      * @brief Check if the element type is boolean
      */
-    bool is_boolean() const noexcept { return type() == type::boolean; }
+    bool is_boolean() const noexcept { return type() == bson::type::boolean; }
 
     /**
      * @brief Check if the element type is null
      */
-    bool is_null() const noexcept { return type() == type::null; }
+    bool is_null() const noexcept { return type() == bson::type::null; }
 
     /**
      * @brief Check if the element type is int32
      */
-    bool is_int32() const noexcept { return type() == type::int32; }
+    bool is_int32() const noexcept { return type() == bson::type::int32; }
 
     /**
      * @brief Check if the element type is int64
      */
-    bool is_int64() const noexcept { return type() == type::int64; }
+    bool is_int64() const noexcept { return type() == bson::type::int64; }
 
     /**
      * @brief Check if the element type is null or undefined
@@ -481,8 +481,8 @@ public:
     bool is_null_or_undefined() const noexcept
     {
       switch (type()) {
-      case type::undefined:
-      case type::null:
+      case bson::type::undefined:
+      case bson::type::null:
         return true;
       default:
         return false;
@@ -495,8 +495,8 @@ public:
     bool is_integer() const noexcept
     {
       switch (type()) {
-      case type::int32:
-      case type::int64:
+      case bson::type::int32:
+      case bson::type::int64:
         return true;
       default:
         return false;
@@ -509,9 +509,9 @@ public:
     bool is_number() const noexcept
     {
       switch (type()) {
-      case type::fp64:
-      case type::int32:
-      case type::int64:
+      case bson::type::fp64:
+      case bson::type::int32:
+      case bson::type::int64:
         return true;
       default:
         return false;
@@ -653,7 +653,7 @@ public:
      */
     reader as_document(const reader& default_value) const noexcept
     {
-      return as_subdocument(default_value, type::document);
+      return as_subdocument(default_value, bson::type::document);
     }
 
     /**
@@ -671,7 +671,7 @@ public:
      */
     reader as_array(const reader& default_value) const noexcept
     {
-      return as_subdocument(default_value, type::array);
+      return as_subdocument(default_value, bson::type::array);
     }
 
     /**
