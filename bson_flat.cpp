@@ -589,4 +589,14 @@ int reader::query_size(const void* buffer, std::size_t length) noexcept
   return total;
 }
 
+reader::element reader::find(const char* e_name) const noexcept
+{
+  for (const auto& field : *this) {
+    if (std::strcmp(field.name(), e_name) == 0) {
+      return field;
+    }
+  }
+  return element { nullptr, nullptr };
+}
+
 } /* namespace bson */

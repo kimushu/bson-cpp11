@@ -976,3 +976,20 @@ TEST(reader, element_falsy)
     ASSERT_TRUE(e.falsy()) << "key=\"" << e.name() << "\",type=" << static_cast<int>(e.type());
   }
 }
+
+TEST(reader, find)
+{
+  std::uint8_t buffer[] = {
+    0x0c,0x00,0x00,0x00,
+      0x06,0x41,0x00,
+      0x08,0x42,0x00,0x01,
+    0x00,
+  };
+  bson::reader r(buffer, sizeof(buffer));
+  auto a = r.find("A");
+  ASSERT_TRUE(a.is_undefined());
+  auto b = r.find("B");
+  ASSERT_TRUE(b.is_boolean());
+  auto ab = r.find("AB");
+  ASSERT_FALSE(ab.valid());
+}

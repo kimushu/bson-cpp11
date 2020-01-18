@@ -806,6 +806,7 @@ public:
     : e_name(e_name), data(data) {}
 
     friend class const_iterator;
+    friend class reader;
     friend std::ostream& operator<<(std::ostream&, const element&);
 
   private:
@@ -974,6 +975,13 @@ public:
    * @brief Return an iterator to the end (const)
    */
   const_iterator cend() const noexcept { return const_iterator(); }
+
+  /**
+   * @brief Find a field
+   * 
+   * @param e_name Element name to find
+   */
+  element find(const char* e_name) const noexcept;
 
 private:
   accessor buffer;
