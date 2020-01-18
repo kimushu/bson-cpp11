@@ -315,13 +315,17 @@ TEST(writer, add_array_with_writer)
 
 TEST(writer, add_binary)
 {
-  std::uint8_t buffer[32];
+  std::uint8_t buffer[40];
   std::memset(buffer, 0xaa, sizeof(buffer));
-  bson::writer w(buffer, 0x10);
-  w.add_binary("a", "A\0@", 3, bson::subtype::user_defined);
+  bson::writer w(buffer, 0x20);
+  ASSERT_TRUE(w.add_binary("a", "A\0@", 3, bson::subtype::user_defined));
+  void* data;
+  ASSERT_NE(nullptr, data = w.add_binary("b", 5, bson::subtype::md5));
+  std::memcpy(data, "\xde\xad\xbe\xef\xda", 5);
   ASSERT_BINEQ(
-    "10 00 00 00 "
+    "1d 00 00 00 "
     "05 61 00 03 00 00 00 80 41 00 40 "
+    "05 62 00 05 00 00 00 05 de ad be ef da "
     "00 aa",
     buffer
   );

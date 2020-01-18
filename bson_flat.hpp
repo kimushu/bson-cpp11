@@ -176,6 +176,16 @@ public:
                   subtype subtype = subtype::generic) noexcept;
 
   /**
+   * @brief Add binary (without copy)
+   * 
+   * @param e_name Element name
+   * @param length Length in bytes
+   * @param subtype Sub type
+   */
+  void* add_binary(const char* e_name, std::size_t length,
+                   subtype subtype = subtype::generic) noexcept;
+
+  /**
    * @brief Add undefined
    * 
    * @param e_name Element name

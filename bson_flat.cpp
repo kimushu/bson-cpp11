@@ -106,8 +106,18 @@ bool writer::add_string(const char* e_name, const char* string,
 bool writer::add_binary(const char* e_name, const void* buffer,
                         std::size_t length, subtype subtype) noexcept
 {
-  if (length > INT32_MAX) {
+  auto pointer = add_binary(e_name, length, subtype);
+  if (!pointer) {
     return false;
+  }
+  std::memcpy(pointer, buffer, length);
+  return true;
+}
+
+void* writer::add_binary(const char* e_name, std::size_t length, subtype subtype) noexcept
+{
+  if (length > INT32_MAX) {
+    return nullptr;
   }
   union {
     std::int32_t* int32;
@@ -116,13 +126,12 @@ bool writer::add_binary(const char* e_name, const void* buffer,
   } dest;
   dest.pointer = add_element(e_name, bson::type::binary, length + 5);
   if (!dest.pointer) {
-    return false;
+    return nullptr;
   }
   const int32_t length_buffer = length;
   std::memcpy(dest.int32++, &length_buffer, 4);
   *dest.subtype++ = subtype;
-  std::memcpy(dest.pointer, buffer, length);
-  return true;
+  return dest.pointer;
 }
 
 bool writer::add_boolean(const char* e_name, bool value) noexcept
