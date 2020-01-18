@@ -248,6 +248,13 @@ public:
    */
   bool get_bytes(const std::uint8_t*& bytes, std::size_t& length) const noexcept;
 
+  /**
+   * @brief Release BSON bytes
+   * 
+   * @param length Reference to retrieve length in bytes
+   */
+  std::uint8_t* release(std::size_t& length) noexcept;
+
 private:
   /**
    * @brief Construct an invalid BSON writer

@@ -173,6 +173,23 @@ bool writer::get_bytes(const std::uint8_t*& bytes, std::size_t& length) const no
   return true;
 }
 
+std::uint8_t* writer::release(std::size_t& length) noexcept
+{
+  if (locked || !is_root || !malloc) {
+    return nullptr;
+  }
+  auto bytes = static_cast<std::uint8_t*>(buffer);
+  length = (offset + 1);
+
+  // Invalidate write
+  parent = nullptr;
+  offset = 0;
+  locked = 1;
+  this->length = 0;
+  malloc = 0;
+  return bytes;
+}
+
 void* writer::add_element(const char* e_name, type type, std::size_t space) noexcept
 {
   if (locked) {

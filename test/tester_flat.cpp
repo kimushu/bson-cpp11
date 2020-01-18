@@ -327,6 +327,33 @@ TEST(writer, add_binary)
   );
 }
 
+TEST(writer, release)
+{
+  std::size_t length = 0xdeadbeef;
+  {
+    char fixed[32];
+    bson::writer w(fixed, sizeof(fixed));
+    ASSERT_EQ(nullptr, w.release(length));
+    ASSERT_EQ(0xdeadbeef, length);
+  }
+  bson::writer w;
+  {
+    bson::writer sub = w.add_document("A");
+    ASSERT_EQ(nullptr, sub.release(length));
+    ASSERT_EQ(0xdeadbeef, length);
+  }
+  std::uint8_t* bytes;
+  ASSERT_NE(nullptr, (bytes = w.release(length)));
+  ASSERT_EQ(0x0d, length);
+  ASSERT_BINEQ(
+    "0d 00 00 00 "
+    "03 41 00 05 00 00 00 00 "
+    "00 ",
+    bytes
+  );
+  ASSERT_FALSE(w.valid());
+}
+
 namespace bson {
 
 std::ostream& operator<<(std::ostream& ostream, const reader::element& element)
