@@ -579,4 +579,14 @@ terminate:
   goto terminate;
 }
 
+int reader::query_size(const void* buffer, std::size_t length) noexcept
+{
+  if (length < 4) {
+    return -1;
+  }
+  std::int32_t total;
+  std::memcpy(&total, buffer, 4);
+  return total;
+}
+
 } /* namespace bson */

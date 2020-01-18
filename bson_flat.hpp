@@ -922,6 +922,16 @@ public:
 
 public:
   /**
+   * @brief Query document length
+   * 
+   * @param buffer Pointer to buffer
+   * @param length Length of buffer
+   * @return <0 Cannot detect (more data required)
+   * @return >=0 Length of document
+   */
+  static int query_size(const void* buffer, std::size_t length) noexcept;
+
+  /**
    * @brief Construct a new BSON reader
    * 
    * @param buffer Pointer to buffer

@@ -445,6 +445,15 @@ TEST(reader, iterator_fail_second)
   ASSERT_TRUE((++i).fail());
 }
 
+TEST(reader, query_size)
+{
+  std::uint8_t buffer[] = {0x05, 0x00, 0x00, 0x00, 0x00, 0xaa};
+  ASSERT_LT(bson::reader::query_size(buffer, 3), 0);
+  ASSERT_EQ(5, bson::reader::query_size(buffer, 4));
+  ASSERT_EQ(5, bson::reader::query_size(buffer, 5));
+  ASSERT_EQ(5, bson::reader::query_size(buffer, 6));
+}
+
 TEST(reader, element_double)
 {
   std::uint8_t buffer[] = {
